@@ -42,6 +42,8 @@ public class Scanner {
     }
 
     public List<Token> scanTokens() {
+        tokens.add(new Token(SOF, "", null, line));
+
         while (!isAtEnd()) {
             start = current;
             scanToken();

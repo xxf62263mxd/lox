@@ -8,9 +8,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static com.peck.TokenType.EOF;
+
 
 public class Lox {
     private static boolean hadError = false;
+    private static boolean debug = true;
 
     public static void main(String[] args) throws IOException {
         if(args.length > 1) {
@@ -49,17 +52,41 @@ public class Lox {
         Scanner sc = new Scanner(source);
         List<Token> tokens = sc.scanTokens();
 
-        for (Token token : tokens) {
-            System.out.println(token);
+        if(debug) {
+            System.out.println("============== Token ============");
+            for (Token token : tokens) {
+                System.out.println(token);
+            }
         }
+
+        Parser parser = new Parser(tokens);
+        Expr root = parser.parse();
+
+        if(hadError) return;
+
+        if(debug) {
+            System.out.println("============== Expression ============");
+            System.out.println(new AstPrinter().print(root));
+        }
+
+    }
+
+    public static void error(Token token, String message) {
+        hadError = true;
+        if(token.getType() == EOF) {
+            report(token.getLine(),"at end" ,message);
+        } else {
+            report(token.getLine(),"at '"+ token.getLexeme() +"'" ,message);
+        }
+
     }
 
     public static void error(int line, String message) {
+        hadError = true;
         report(line,"",message);
     }
 
     private static void report(int line, String where, String message ) {
         System.out.println("[Line " + line + "] Error " + where + ": " + message);
-        hadError = true;
     }
 }

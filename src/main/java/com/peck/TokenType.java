@@ -21,5 +21,5 @@ public enum TokenType {
   // Comment.
   SingleLineComment,MultiLineComment,
 
-  EOF
+  SOF,EOF
 }
