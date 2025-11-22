@@ -12,8 +12,12 @@ import static com.peck.TokenType.EOF;
 
 
 public class Lox {
+
+    private static final Interpreter interpreter = new Interpreter();
+
     private static boolean hadError = false;
-    private static boolean debug = true;
+    private static boolean hadRuntimeError = false;
+    private static boolean debug = false;
 
     public static void main(String[] args) throws IOException {
         if(args.length > 1) {
@@ -31,6 +35,7 @@ public class Lox {
         run(new String(bytes, Charset.defaultCharset()));
 
         if(hadError) System.exit(65);
+        if(hadRuntimeError) System.exit(70);
     }
 
     private static void runPrompt() throws IOException {
@@ -45,6 +50,7 @@ public class Lox {
 
             //If the user makes a mistake, it shouldn't kill the entire session
             hadError = false;
+            hadRuntimeError = false;
         }
     }
 
@@ -69,6 +75,9 @@ public class Lox {
             System.out.println(new AstPrinter().print(root));
         }
 
+
+        interpreter.interpret(root);
+
     }
 
     public static void error(Token token, String message) {
@@ -84,6 +93,11 @@ public class Lox {
     public static void error(int line, String message) {
         hadError = true;
         report(line,"",message);
+    }
+
+    public static void runtimeError(Interpreter.InterpretError error) {
+        hadRuntimeError = true;
+        System.out.println("\033[31m[line " + error.getToken().getLine() + "] " + error.getMessage()+"\033[0m");
     }
 
     private static void report(int line, String where, String message ) {
