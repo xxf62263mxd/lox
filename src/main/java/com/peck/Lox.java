@@ -66,15 +66,9 @@ public class Lox {
         }
 
         Parser parser = new Parser(tokens);
-        Expr root = parser.parse();
+        List<Stmt> root = parser.parse();
 
         if(hadError) return;
-
-        if(debug) {
-            System.out.println("============== Expression ============");
-            System.out.println(new AstPrinter().print(root));
-        }
-
 
         interpreter.interpret(root);
 

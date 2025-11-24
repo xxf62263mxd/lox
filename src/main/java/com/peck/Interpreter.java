@@ -1,11 +1,14 @@
 package com.peck;
 
-public class Interpreter implements Expr.Visitor<Object>{
+import java.util.List;
 
-    public void interpret(Expr expr) {
+public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
+
+    public void interpret(List<Stmt> stmts) {
         try {
-            Object val = evaluate(expr);
-            System.out.println(stringify(val));
+            for (Stmt stmt : stmts) {
+                execute(stmt);
+            }
         } catch (InterpretError e) {
             Lox.runtimeError(e);
         }
@@ -21,6 +24,10 @@ public class Interpreter implements Expr.Visitor<Object>{
             return text;
         }
         return val.toString();
+    }
+
+    private void execute(Stmt stmt) {
+        stmt.accept(this);
     }
 
     private Object evaluate(Expr expr){
@@ -118,6 +125,17 @@ public class Interpreter implements Expr.Visitor<Object>{
     @Override
     public Object visitGroupingExpr(Expr.Grouping expr) {
         return evaluate(expr.expression);
+    }
+
+    @Override
+    public void visitExpressionStmt(Stmt.Expression stmt) {
+        evaluate(stmt.expr);
+    }
+
+    @Override
+    public void visitPrintStmt(Stmt.Print stmt) {
+        Object val = evaluate(stmt.expr);
+        System.out.println(stringify(val));
     }
 
 

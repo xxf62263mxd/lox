@@ -1,5 +1,6 @@
 package com.peck;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.peck.TokenType.*;
@@ -15,12 +16,42 @@ public class Parser {
         this.tokens = tokens;
     }
 
-    public Expr parse() {
+    public List<Stmt> parse() {
+        List<Stmt> stmts = new ArrayList<>();
         try {
-            return expression();
-        } catch(ParseError e) {
+            while(!isAtEnd()) stmts.add(statement());
+        } catch(ParseError e){
             return null;
         }
+
+        return stmts;
+    }
+
+    /**
+     * statement ->   exprStmt | printStmt
+     */
+    private Stmt statement() {
+        if(consumeIfMatchAny(PRINT)) return printStatement();
+
+        return expressionStatement();
+    }
+
+    /**
+     * printStmt -> 'print' expression ';'
+     */
+    private Stmt printStatement() {
+        Expr expr = expression();
+        consume(SEMICOLON,"Expect ';' at end of statement");
+        return new Stmt.Print(expr);
+    }
+
+    /**
+     * exprStmt -> expression ';'
+     */
+    private Stmt expressionStatement() {
+        Expr expr = expression();
+        consume(SEMICOLON,"Expect ';' at end of statement");
+        return new Stmt.Expression(expr);
     }
 
     /**
