@@ -4,6 +4,8 @@ import java.util.List;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
 
+    private final Environment env =  new Environment();
+
     public void interpret(List<Stmt> stmts) {
         try {
             for (Stmt stmt : stmts) {
@@ -128,6 +130,18 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
     }
 
     @Override
+    public Object visitVariableExpr(Expr.Variable expr) {
+        return env.get(expr.name);
+    }
+
+    @Override
+    public Object visitAssignExpr(Expr.Assign expr) {
+        Object val = evaluate(expr.value);
+        env.assign(expr.name, val);
+        return val;
+    }
+
+    @Override
     public void visitExpressionStmt(Stmt.Expression stmt) {
         evaluate(stmt.expr);
     }
@@ -138,19 +152,15 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
         System.out.println(stringify(val));
     }
 
-
-    public static class InterpretError extends RuntimeException {
-        private final Token token;
-
-        public InterpretError(Token token, String message) {
-            super(message);
-            this.token = token;
+    @Override
+    public void visitVarDeclaration(Stmt.VarDeclaration stmt) {
+        Object val = null;
+        if(stmt.initializer != null) {
+            val =  evaluate(stmt.initializer);
         }
-
-        public Token getToken() {
-            return token;
-        }
+        env.define(stmt.name.getLexeme(), val);
     }
+
 
     private void checkNumberOperand(Token operator, Object operand) {
         if(!(operand instanceof Double))

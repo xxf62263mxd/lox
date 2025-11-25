@@ -41,4 +41,14 @@ public class AstPrinter implements Expr.Visitor<String> {
     public String visitGroupingExpr(Expr.Grouping expr) {
         return parenthesize("group", expr.expression);
     }
+
+    @Override
+    public String visitVariableExpr(Expr.Variable expr) {
+        return expr.name.getLexeme();
+    }
+
+    @Override
+    public String visitAssignExpr(Expr.Assign expr) {
+        return expr.value.toString();
+    }
 }

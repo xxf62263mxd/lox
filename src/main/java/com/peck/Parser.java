@@ -18,13 +18,30 @@ public class Parser {
 
     public List<Stmt> parse() {
         List<Stmt> stmts = new ArrayList<>();
+        while(!isAtEnd()) stmts.add(declaration());
+        return stmts;
+    }
+
+    /**
+     * declaration ->   varDeclaration | statement
+     */
+    private Stmt declaration() {
         try {
-            while(!isAtEnd()) stmts.add(statement());
-        } catch(ParseError e){
+            if(consumeIfMatchAny(VAR)) return varDeclaration();
+            return statement();
+        } catch (ParseError e) {
+            synchronize();
             return null;
         }
+    }
 
-        return stmts;
+    private Stmt varDeclaration() {
+        consume(IDENTIFIER,"Expect variable name.");
+        Token name = previous();
+        Expr initializer = null;
+        if(consumeIfMatchAny(EQUAL)) initializer = expression();
+        consume(SEMICOLON,"Expect ';' at end of statement");
+        return new Stmt.VarDeclaration(name, initializer);
     }
 
     /**
@@ -55,11 +72,37 @@ public class Parser {
     }
 
     /**
-     *  expression = equality
+     *  expression -> assignment
      */
     private Expr expression() {
-        return equality();
+        return assignment();
     }
+
+    /**
+     *  assignment -> IDENTIFIER "=" assignment
+     *                | equality
+     */
+    private Expr assignment() {
+        Expr left = equality();
+
+        if(consumeIfMatchAny(EQUAL)) {
+            Token operator = previous();
+
+            // assignment is right-associative
+            // we don't loop to build expression same as Binary
+            Expr val = assignment();
+
+            if(left instanceof Expr.Variable var) {
+                Token name = var.name;
+                return new Expr.Assign(name, val);
+            }
+
+            throw error(operator, "Invalid assignment target.");
+        }
+
+        return  left;
+    }
+
 
     /**
      * equality -> comparison (('=='|'!=') comparison)*
@@ -153,6 +196,9 @@ public class Parser {
             consume(RIGHT_PAREN, "Expect ')' after expression");
             return expr;
         }
+
+        if(consumeIfMatchAny(IDENTIFIER))
+            return new Expr.Variable(previous());
 
         throw error(peek(), "Expect expression");
     }

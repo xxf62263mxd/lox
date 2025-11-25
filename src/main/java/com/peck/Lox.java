@@ -89,7 +89,7 @@ public class Lox {
         report(line,"",message);
     }
 
-    public static void runtimeError(Interpreter.InterpretError error) {
+    public static void runtimeError(InterpretError error) {
         hadRuntimeError = true;
         System.out.println("\033[31m[line " + error.getToken().getLine() + "] " + error.getMessage()+"\033[0m");
     }

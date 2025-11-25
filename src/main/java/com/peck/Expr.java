@@ -63,6 +63,34 @@ public abstract class Expr {
         }
     }
 
+    public static class Variable extends Expr {
+        final Token name;
+
+        public Variable(Token name) {
+            this.name = name;
+        }
+
+        @Override
+        public <R> R accept(Visitor<R> visitor) {
+            return visitor.visitVariableExpr(this);
+        }
+    }
+
+    public static class Assign extends Expr {
+        final Token name;
+        final Expr value;
+
+        public Assign(Token name, Expr value) {
+            this.name = name;
+            this.value = value;
+        }
+
+        @Override
+        <R> R accept(Visitor<R> visitor) {
+            return visitor.visitAssignExpr(this);
+        }
+    }
+
 
     // A Visitor can be regarded as an operator for each Expr
     // This is an appropriate pattern design when we have a pure data class
@@ -72,5 +100,7 @@ public abstract class Expr {
         R visitUnaryExpr(Unary expr);
         R visitLiteralExpr(Literal expr);
         R visitGroupingExpr(Grouping expr);
+        R visitVariableExpr(Variable expr);
+        R visitAssignExpr(Assign expr);
     }
 }
