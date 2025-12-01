@@ -45,12 +45,24 @@ public class Parser {
     }
 
     /**
-     * statement ->   exprStmt | printStmt
+     * statement ->   exprStmt | printStmt | block
      */
     private Stmt statement() {
         if(consumeIfMatchAny(PRINT)) return printStatement();
+        if(consumeIfMatchAny(LEFT_BRACE)) return blockStatement();
 
         return expressionStatement();
+    }
+
+    private Stmt blockStatement() {
+        List<Stmt> stmts = new ArrayList<>();
+
+        while(peek().getType() != RIGHT_BRACE && !isAtEnd())
+            stmts.add(declaration());
+
+        consume(RIGHT_BRACE, "Expect '}' after block.");
+
+        return new Stmt.Block(stmts);
     }
 
     /**

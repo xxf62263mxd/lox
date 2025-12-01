@@ -1,5 +1,7 @@
 package com.peck;
 
+import java.util.List;
+
 public abstract class Stmt {
 
     abstract void accept(Visitor visitor);
@@ -44,10 +46,23 @@ public abstract class Stmt {
             visitor.visitPrintStmt(this);
         }
     }
+
+    public static class Block extends Stmt {
+        final List<Stmt> stmts;
+
+        public Block(List<Stmt> stmts) {
+            this.stmts = stmts;
+        }
+        @Override
+        void accept(Visitor visitor) {
+            visitor.visitBlockStmt(this);
+        }
+    }
     
     public interface Visitor {
         void visitExpressionStmt(Expression stmt);
         void visitPrintStmt(Print stmt);
         void visitVarDeclaration(VarDeclaration stmt);
+        void visitBlockStmt(Block stmt);
     }
 }
