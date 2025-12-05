@@ -45,15 +45,35 @@ public class Parser {
     }
 
     /**
-     * statement ->   exprStmt | printStmt | block
+     * statement ->   exprStmt | printStmt | ifStmt |block
      */
     private Stmt statement() {
+        if(consumeIfMatchAny(IF)) return ifStatement();
         if(consumeIfMatchAny(PRINT)) return printStatement();
         if(consumeIfMatchAny(LEFT_BRACE)) return blockStatement();
 
         return expressionStatement();
     }
 
+    /**
+     * if -> 'if' '(' expression ')' statement ('else' statement)?
+     */
+    private Stmt ifStatement() {
+        consume(LEFT_PAREN,"Expect '(' after 'if'.");
+        Expr condition = expression();
+        consume(RIGHT_PAREN,"Expect ')' after 'if'.");
+
+        Stmt thenStmt = statement();
+        Stmt elseStmt = null;
+        if(consumeIfMatchAny(ELSE)) {
+            elseStmt= statement();
+        }
+        return new Stmt.If(condition, thenStmt, elseStmt);
+    }
+
+    /**
+     * block -> '{' declaration* '}'
+     */
     private Stmt blockStatement() {
         List<Stmt> stmts = new ArrayList<>();
 
@@ -92,10 +112,10 @@ public class Parser {
 
     /**
      *  assignment -> IDENTIFIER "=" assignment
-     *                | equality
+     *                | logic_or
      */
     private Expr assignment() {
-        Expr left = equality();
+        Expr left = or();
 
         if(consumeIfMatchAny(EQUAL)) {
             Token operator = previous();
@@ -115,6 +135,35 @@ public class Parser {
         return  left;
     }
 
+    /**
+     * logic_or -> logic_and ('or' logic_and)*
+     */
+    private Expr or() {
+        Expr expr = and();
+
+        while(consumeIfMatchAny(OR)) {
+            Token operator = previous();
+            Expr right = and();
+            expr = new Expr.Logical(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    /**
+     * logic_and -> equality ('or' equality)*
+     */
+    private Expr and() {
+        Expr expr = equality();
+
+        while(consumeIfMatchAny(AND)) {
+            Token operator = previous();
+            Expr right = equality();
+            expr = new Expr.Logical(expr, operator, right);
+        }
+
+        return expr;
+    }
 
     /**
      * equality -> comparison (('=='|'!=') comparison)*

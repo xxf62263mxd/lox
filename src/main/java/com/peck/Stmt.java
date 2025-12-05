@@ -58,11 +58,30 @@ public abstract class Stmt {
             visitor.visitBlockStmt(this);
         }
     }
-    
+
+    public static class If extends Stmt {
+        final Expr conditionExpr;
+        final Stmt thenStmt;
+        final Stmt elseStmt;
+
+        public If(Expr conditionExpr, Stmt thenStmt, Stmt elseStmt) {
+            this.conditionExpr = conditionExpr;
+            this.thenStmt = thenStmt;
+            this.elseStmt = elseStmt;
+        }
+
+        @Override
+        void accept(Visitor visitor) {
+            visitor.visitIfStmt(this);
+        }
+    }
+
+
     public interface Visitor {
         void visitExpressionStmt(Expression stmt);
         void visitPrintStmt(Print stmt);
         void visitVarDeclaration(VarDeclaration stmt);
         void visitBlockStmt(Block stmt);
+        void visitIfStmt(If stmt);
     }
 }

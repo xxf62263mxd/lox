@@ -7,6 +7,23 @@ public abstract class Expr {
     // it only case Visitor has a corresponding method to use itself.
     abstract <R> R accept(Visitor<R> visitor);
 
+    // Compare with Binary, Logical expression will short-circuit
+    public static class Logical extends Expr {
+        final Expr left;
+        final Token operator;
+        final  Expr right;
+        public Logical(Expr left, Token operator, Expr right) {
+            this.left = left;
+            this.operator = operator;
+            this.right = right;
+        }
+
+        @Override
+        <R> R accept(Visitor<R> visitor) {
+            return visitor.visitLogicalExpr(this);
+        }
+    }
+
     public static class Binary extends Expr {
         final Expr left;
         final Token operator;
@@ -102,5 +119,6 @@ public abstract class Expr {
         R visitGroupingExpr(Grouping expr);
         R visitVariableExpr(Variable expr);
         R visitAssignExpr(Assign expr);
+        R visitLogicalExpr(Logical expr);
     }
 }

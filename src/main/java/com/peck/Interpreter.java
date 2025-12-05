@@ -142,6 +142,19 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
     }
 
     @Override
+    public Object visitLogicalExpr(Expr.Logical expr) {
+        Object left = evaluate(expr.left);
+
+        if(expr.operator.getType() == TokenType.OR) {
+            if(isTruthy(left)) return left;
+        } else {
+            if(!isTruthy(left)) return left;
+        }
+
+        return evaluate(expr.right);
+    }
+
+    @Override
     public void visitExpressionStmt(Stmt.Expression stmt) {
         evaluate(stmt.expr);
     }
@@ -164,6 +177,15 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
     @Override
     public void visitBlockStmt(Stmt.Block stmt) {
         executeBlock(stmt, new Environment(this.env));
+    }
+
+    @Override
+    public void visitIfStmt(Stmt.If stmt) {
+        if(isTruthy(evaluate(stmt.conditionExpr))) {
+            execute(stmt.thenStmt);
+        }else if(stmt.elseStmt != null) {
+            execute(stmt.elseStmt);
+        }
     }
 
     private void executeBlock(Stmt.Block block, Environment env) {
