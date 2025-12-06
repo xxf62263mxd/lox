@@ -2,6 +2,8 @@ package com.peck;
 
 import java.util.List;
 
+import com.peck.Stmt.While;
+
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
 
     private Environment env =  new Environment();
@@ -211,5 +213,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
     private void checkNumberOperands(Token operator, Object operand1,Object operand2) {
         if(!(operand1 instanceof Double && operand2 instanceof Double))
             throw new InterpretError(operator, "Operand must be a number.");
+    }
+
+    @Override
+    public void visitWhileStmt(While stmt) {
+        while(isTruthy(evaluate(stmt.conditionExpr))) {
+            execute(stmt.body);
+        }
     }
 }

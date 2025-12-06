@@ -76,6 +76,22 @@ public abstract class Stmt {
         }
     }
 
+    public static class While extends Stmt {
+        final Expr conditionExpr;
+        final Stmt body;
+
+        public While(Expr conditionExpr, Stmt body) {
+            this.conditionExpr = conditionExpr;
+            this.body = body;
+        }
+
+        @Override
+        void accept(Visitor visitor) {
+            visitor.visitWhileStmt(this);
+        }
+            
+    }
+
 
     public interface Visitor {
         void visitExpressionStmt(Expression stmt);
@@ -83,5 +99,6 @@ public abstract class Stmt {
         void visitVarDeclaration(VarDeclaration stmt);
         void visitBlockStmt(Block stmt);
         void visitIfStmt(If stmt);
+        void visitWhileStmt(While stmt);
     }
 }
