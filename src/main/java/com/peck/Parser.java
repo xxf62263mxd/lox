@@ -264,11 +264,6 @@ public class Parser {
         throw error(peek(), "Expect expression");
     }
 
-
-    private boolean isAtStart() {
-        return previous().getType() == SOF;
-    }
-
     private boolean isAtEnd() {
         return peek().getType() == EOF;
     }
@@ -340,9 +335,9 @@ public class Parser {
                 case PRINT:
                 case RETURN:
                     return;
+                default:
+                    consume(); // Consume rest token in the erroneous expression
             }
-
-            consume(); // Consume rest token in the erroneous expression
         }
 
     }
