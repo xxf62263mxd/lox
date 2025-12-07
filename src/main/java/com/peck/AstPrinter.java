@@ -1,5 +1,7 @@
 package com.peck;
 
+import com.peck.Expr.Call;
+
 public class AstPrinter implements Expr.Visitor<String> {
 
     // AstPrinter doesn't case which kind of Expr will be printed
@@ -55,5 +57,11 @@ public class AstPrinter implements Expr.Visitor<String> {
     @Override
     public String visitLogicalExpr(Expr.Logical expr) {
         return parenthesize(expr.operator.getLexeme(), expr.left, expr.right);
+    }
+
+    @Override
+    public String visitCallExpr(Call expr) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visitCallExpr'");
     }
 }

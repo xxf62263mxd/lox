@@ -1,5 +1,7 @@
 package com.peck;
 
+import java.util.List;
+
 public abstract class Expr {
 
 
@@ -108,6 +110,23 @@ public abstract class Expr {
         }
     }
 
+    public static class Call extends Expr {
+        final Expr callee;
+        final Token paren;
+        final List<Expr> args;
+        
+        public Call(Expr callee, Token paren, List<Expr> args) {
+            this.callee = callee;
+            this.paren = paren;
+            this.args = args;
+        }
+
+        @Override
+        <R> R accept(Visitor<R> visitor) {
+            return visitor.visitCallExpr(this);
+        }
+    }
+
 
     // A Visitor can be regarded as an operator for each Expr
     // This is an appropriate pattern design when we have a pure data class
@@ -120,5 +139,6 @@ public abstract class Expr {
         R visitVariableExpr(Variable expr);
         R visitAssignExpr(Assign expr);
         R visitLogicalExpr(Logical expr);
+        R visitCallExpr(Call expr);
     }
 }

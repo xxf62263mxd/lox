@@ -1,7 +1,9 @@
 package com.peck;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import com.peck.Expr.Call;
 import com.peck.Stmt.While;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
@@ -220,5 +222,28 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
         while(isTruthy(evaluate(stmt.conditionExpr))) {
             execute(stmt.body);
         }
+    }
+
+    @Override
+    public Object visitCallExpr(Call expr) {
+        Object callee = evaluate(expr.callee);
+
+        List<Object> args = new ArrayList<>();
+        for(Expr argExpr : expr.args) {
+            args.add(evaluate(argExpr));
+        }
+
+        if(!(callee instanceof Callable)) {
+            throw new InterpretError(expr.paren, "Can only call functions and classes.");
+        }
+
+        Callable func = (Callable) callee;
+        if(func.arity() != expr.args.size()) {
+            throw new InterpretError(expr.paren, "Expected " +
+                func.arity() + " arguments but got " +
+                args.size() + ".");
+        }
+
+        return func.call(this, args);
     }
 }

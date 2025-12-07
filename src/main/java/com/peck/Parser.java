@@ -2,6 +2,7 @@ package com.peck;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.peck.TokenType.*;
@@ -288,7 +289,7 @@ public class Parser {
     }
 
     /**
-     * unary -> ('!'|'-') unary | primary
+     * unary -> ('!'|'-') unary | call
      */
     private Expr unary() {
         if(consumeIfMatchAny(BANG,MINUS)) {
@@ -296,7 +297,41 @@ public class Parser {
             Expr right = unary();
             return new Expr.Unary(operator, right);
         }
-        return primary();
+        return call();
+    }
+
+    /**
+     * call -> primary ( '(' arguments? ')' )*
+     */
+    private Expr call() {
+        Expr expr = primary();
+        
+        if(consumeIfMatchAny(LEFT_PAREN)) {
+            List<Expr> args = Collections.emptyList();
+            if(peek().getType() != RIGHT_PAREN) {
+                args = arguments();
+            }
+            consume(RIGHT_PAREN,"Expect ')' at the end of function.");
+            return new Expr.Call(expr, previous(), args);
+        }
+
+        return expr;
+    }
+
+    /**
+     * arguments -> expression (',' expression)*
+     */
+    private List<Expr> arguments() {
+        List<Expr> args = new ArrayList<>();
+        
+        do {
+            if (args.size() >= 255) {
+                error(peek(), "Can't have more than 255 arguments.");
+            }
+            args.add(expression());
+        }while(consumeIfMatchAny(COMMA));
+        
+        return args;
     }
 
     /**
