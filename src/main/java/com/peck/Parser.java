@@ -80,6 +80,7 @@ public class Parser {
         if(consumeIfMatchAny(IF)) return ifStatement();
         if(consumeIfMatchAny(WHILE)) return whileStatement();
         if(consumeIfMatchAny(FOR)) return forStatement();
+        if(consumeIfMatchAny(RETURN)) return returnStatement();
         if(consumeIfMatchAny(PRINT)) return printStatement();
         if(consumeIfMatchAny(LEFT_BRACE)) return blockStatement();
 
@@ -159,6 +160,19 @@ public class Parser {
             elseStmt= statement();
         }
         return new Stmt.If(condition, thenStmt, elseStmt);
+    }
+
+    /**
+     * return -> 'return' expression? ';'
+     */
+    private Stmt returnStatement() {
+        Expr value = null;
+        if(peek().getType() != SEMICOLON) {
+            value = expression();
+        }
+
+        consume(SEMICOLON,"Expect ';' at end of statement");
+        return new Stmt.Return(value);
     }
 
     /**

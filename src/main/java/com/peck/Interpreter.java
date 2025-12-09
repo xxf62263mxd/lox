@@ -57,6 +57,10 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
 
     private void executeBlock(Stmt.Block block, Environment env) {
         Environment parent = this.env;
+
+        //we need catch exception here
+        //some keywords,like return, break, continue, all will interrupt this block by thrown an exception
+        //we don't catch the exception here, exception will still be thrown up on the stack
         try {
             this.env = env;
 
@@ -225,7 +229,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
         }
     }
 
-        @Override
+    @Override
     public void visitWhileStmt(While stmt) {
         while(isTruthy(evaluate(stmt.conditionExpr))) {
             execute(stmt.body);
@@ -259,6 +263,15 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
     public void visitFunctionStmt(Stmt.Function stmt) {
         Function func = new Function(stmt);
         env.define(stmt.name.getLexeme(), func);
+    }
+
+    @Override
+    public void visitReturnStmt(Stmt.Return stmt) {
+        Object value = null;
+        if(stmt.value != null)
+            value = evaluate(stmt.value);
+
+        throw new ReturnValue(value);
     }
 
     private void checkNumberOperand(Token operator, Object operand) {
@@ -307,8 +320,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
                 env.define(name, value);
             }
 
-            executeBlock(func.body, env);
-
+            try {
+                executeBlock(func.body, env);
+            } catch(ReturnValue r) {
+                return r.value;
+            }
+            
             return null;
         }
 
@@ -317,5 +334,15 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
             return "<fn " + func.name + ">";
         }
         
+    }
+
+    //we disguise an RuntimeException as ReturnValue to interrupt java stack
+    private class ReturnValue extends RuntimeException{
+        final Object value;
+
+        public ReturnValue(Object value) {
+            super(null, null, false, false);
+            this.value = value;
+        }
     }
 }

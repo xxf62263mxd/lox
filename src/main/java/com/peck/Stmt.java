@@ -109,6 +109,19 @@ public abstract class Stmt {
         }
     }
 
+    public static class Return extends Stmt {
+        final Expr value;
+        
+        public Return(Expr value) {
+            this.value = value;
+        }
+
+        @Override
+        void accept(Visitor visitor) {
+            visitor.visitReturnStmt(this);
+        }
+    }
+
 
     public interface Visitor {
         void visitExpressionStmt(Expression stmt);
@@ -118,5 +131,6 @@ public abstract class Stmt {
         void visitIfStmt(If stmt);
         void visitWhileStmt(While stmt);
         void visitFunctionStmt(Function stmt);
+        void visitReturnStmt(Return stmt);
     }
 }
