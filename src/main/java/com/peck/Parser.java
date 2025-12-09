@@ -25,10 +25,11 @@ public class Parser {
     }
 
     /**
-     * declaration ->   varDeclaration | statement
+     * declaration ->   varDeclaration | funDeclaration | statement
      */
     private Stmt declaration() {
         try {
+            if(consumeIfMatchAny(FUN)) return funDeclaration();
             if(consumeIfMatchAny(VAR)) return varDeclaration();
             return statement();
         } catch (ParseError e) {
@@ -44,6 +45,32 @@ public class Parser {
         if(consumeIfMatchAny(EQUAL)) initializer = expression();
         consume(SEMICOLON,"Expect ';' at end of statement");
         return new Stmt.VarDeclaration(name, initializer);
+    }
+
+    private Stmt funDeclaration() {
+        // name
+        consume(IDENTIFIER,"Expect function name.");
+        Token name = previous();
+
+        //params
+        List<Token> params = new ArrayList<>();
+        consume(LEFT_PAREN,"Expect '(' after 'function'.");
+        if(peek().getType() != RIGHT_PAREN) {
+            do{
+                if(params.size() >= 255)
+                    error(peek(), "Can't have more than 255 parameters.");
+
+                consume(IDENTIFIER, "Expect param name.");
+                params.add(previous());
+            }while(consumeIfMatchAny(COMMA));
+        }
+        consume(RIGHT_PAREN,"Expect ')' after 'function'.");
+
+        //body
+        consume(LEFT_BRACE,"Expect '{' before function body.");
+        Stmt body = blockStatement();
+
+        return new Stmt.Function(name, params, body); 
     }
 
     /**

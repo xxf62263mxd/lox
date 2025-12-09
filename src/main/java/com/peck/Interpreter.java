@@ -8,9 +8,28 @@ import com.peck.Stmt.While;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
 
-    private Environment env =  new Environment();
+    private Environment global = new Environment();
+    private Environment env =  global;
 
     public void interpret(List<Stmt> stmts) {
+
+        global.define("clock", new Callable() {
+            @Override
+            public int arity() {
+                return 0;
+            }
+
+            @Override
+            public Object call(Interpreter interpreter, List<Object> args) {
+                return (double)System.currentTimeMillis() / 1000.0;
+            }
+
+            @Override
+            public String toString() {
+                return "<native fn>";
+            }
+        });
+
         try {
             for (Stmt stmt : stmts) {
                 execute(stmt);

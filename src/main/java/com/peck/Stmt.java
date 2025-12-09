@@ -92,6 +92,23 @@ public abstract class Stmt {
             
     }
 
+    public static class Function extends Stmt {
+        final Token name;
+        final List<Token> params;
+        final Stmt body;
+        
+        public Function(Token name, List<Token> params, Stmt body) {
+            this.name = name;
+            this.params = params;
+            this.body = body;
+        }
+
+        @Override
+        void accept(Visitor visitor) {
+            visitor.visitFunctionStmt(this);
+        }
+    }
+
 
     public interface Visitor {
         void visitExpressionStmt(Expression stmt);
@@ -100,5 +117,6 @@ public abstract class Stmt {
         void visitBlockStmt(Block stmt);
         void visitIfStmt(If stmt);
         void visitWhileStmt(While stmt);
+        void visitFunctionStmt(Function stmt);
     }
 }
