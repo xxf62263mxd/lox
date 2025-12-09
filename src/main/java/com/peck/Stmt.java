@@ -95,9 +95,9 @@ public abstract class Stmt {
     public static class Function extends Stmt {
         final Token name;
         final List<Token> params;
-        final Stmt body;
+        final Stmt.Block body;
         
-        public Function(Token name, List<Token> params, Stmt body) {
+        public Function(Token name, List<Token> params, Stmt.Block body) {
             this.name = name;
             this.params = params;
             this.body = body;

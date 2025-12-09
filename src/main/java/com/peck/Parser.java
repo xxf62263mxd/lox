@@ -68,7 +68,7 @@ public class Parser {
 
         //body
         consume(LEFT_BRACE,"Expect '{' before function body.");
-        Stmt body = blockStatement();
+        Stmt.Block body = (Stmt.Block) blockStatement();
 
         return new Stmt.Function(name, params, body); 
     }
@@ -382,8 +382,9 @@ public class Parser {
             return expr;
         }
 
+        // A function also is stored in env as a variable
         if(consumeIfMatchAny(IDENTIFIER))
-            return new Expr.Variable(previous());
+            return new Expr.Variable(previous()); 
 
         throw error(peek(), "Expect expression");
     }

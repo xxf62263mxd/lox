@@ -8,19 +8,19 @@ import com.peck.Stmt.While;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
 
-    private Environment global = new Environment();
-    private Environment env =  global;
+    public Environment globalEnv = new Environment();
+    private Environment env =  globalEnv;
 
     public void interpret(List<Stmt> stmts) {
 
-        global.define("clock", new Callable() {
+        globalEnv.define("clock", new Callable() {
             @Override
             public int arity() {
                 return 0;
             }
 
             @Override
-            public Object call(Interpreter interpreter, List<Object> args) {
+            public Object call(List<Object> args) {
                 return (double)System.currentTimeMillis() / 1000.0;
             }
 
@@ -53,6 +53,20 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
 
     private void execute(Stmt stmt) {
         stmt.accept(this);
+    }
+
+    private void executeBlock(Stmt.Block block, Environment env) {
+        Environment parent = this.env;
+        try {
+            this.env = env;
+
+            for(Stmt stmt : block.stmts) {
+                execute(stmt);
+            }
+
+        } finally {
+            this.env = parent;
+        }
     }
 
     private Object evaluate(Expr expr){
@@ -211,32 +225,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
         }
     }
 
-    private void executeBlock(Stmt.Block block, Environment env) {
-        Environment parent = this.env;
-        try {
-            this.env = env;
-
-            for(Stmt stmt : block.stmts) {
-                execute(stmt);
-            }
-
-        } finally {
-            this.env = parent;
-        }
-    }
-
-
-    private void checkNumberOperand(Token operator, Object operand) {
-        if(!(operand instanceof Double))
-            throw new InterpretError(operator, "Operand must be a number.");
-    }
-
-    private void checkNumberOperands(Token operator, Object operand1,Object operand2) {
-        if(!(operand1 instanceof Double && operand2 instanceof Double))
-            throw new InterpretError(operator, "Operand must be a number.");
-    }
-
-    @Override
+        @Override
     public void visitWhileStmt(While stmt) {
         while(isTruthy(evaluate(stmt.conditionExpr))) {
             execute(stmt.body);
@@ -263,6 +252,70 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
                 args.size() + ".");
         }
 
-        return func.call(this, args);
+        return func.call(args);
+    }
+
+    @Override
+    public void visitFunctionStmt(Stmt.Function stmt) {
+        Function func = new Function(stmt);
+        env.define(stmt.name.getLexeme(), func);
+    }
+
+    private void checkNumberOperand(Token operator, Object operand) {
+        if(!(operand instanceof Double))
+            throw new InterpretError(operator, "Operand must be a number.");
+    }
+
+    private void checkNumberOperands(Token operator, Object operand1,Object operand2) {
+        if(!(operand1 instanceof Double && operand2 instanceof Double))
+            throw new InterpretError(operator, "Operand must be a number.");
+    }
+
+    /**
+     * a Callable can be a function or a class construction
+     */
+    interface Callable {
+        int arity();
+        Object call(List<Object> args);
+    }
+
+    /** 
+     * function call = function template code + independent environment for execution .
+     * This class wraps function code and provides a locally-function environment
+     */
+    private class Function implements Callable{
+
+        final Stmt.Function func;
+
+        public Function(Stmt.Function code) {
+            this.func = code;
+        }
+
+        @Override
+        public int arity() {
+            return func.params.size();
+        }
+
+        @Override
+        public Object call(List<Object> args) {
+            Environment env = new Environment(globalEnv);
+            
+            //bind params into env
+            for(int i = 0; i < arity() ; i++) {
+                String name = func.params.get(i).getLexeme();
+                Object value = args.get(i);
+                env.define(name, value);
+            }
+
+            executeBlock(func.body, env);
+
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            return "<fn " + func.name + ">";
+        }
+        
     }
 }

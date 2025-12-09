@@ -1,0 +1,13 @@
+var first = "1";
+var last = "2";
+
+fun sayHi(first, last) {
+  print "Hi, " + first + " " + last + "!";
+}
+
+fun add(a1, a2) {
+  print a1 + a2;
+}
+
+sayHi("Dear", "Reader");
+add(100,200);
