@@ -261,7 +261,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
 
     @Override
     public void visitFunctionStmt(Stmt.Function stmt) {
-        Function func = new Function(stmt);
+        Function func = new Function(stmt, env);
         env.define(stmt.name.getLexeme(), func);
     }
 
@@ -299,9 +299,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
     private class Function implements Callable{
 
         final Stmt.Function func;
+        final Environment closure;
 
-        public Function(Stmt.Function code) {
+        public Function(Stmt.Function code, Environment closure) {
             this.func = code;
+            this.closure = closure;
         }
 
         @Override
@@ -311,7 +313,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
 
         @Override
         public Object call(List<Object> args) {
-            Environment env = new Environment(globalEnv);
+            Environment env = new Environment(closure);
             
             //bind params into env
             for(int i = 0; i < arity() ; i++) {
