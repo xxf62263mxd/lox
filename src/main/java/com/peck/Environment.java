@@ -46,4 +46,20 @@ public class Environment {
         throw new InterpretError(token
                 ,"Undefined variable '" + token.getLexeme() + "'.");
     }
+
+    private Environment ancestor(int distance) {
+        Environment env = this;
+        for (int i = 0; i < distance ; i++) {
+            env = env.parent;
+        }
+        return env;
+    }
+
+    public Object getAt(int distance, Token token) {
+        return ancestor(distance).get(token);
+    }
+
+    public void assignAt(int distance, Token token, Object value) {
+        ancestor(distance).assign(token, value);
+    }
 }

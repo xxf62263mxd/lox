@@ -110,9 +110,11 @@ public abstract class Stmt {
     }
 
     public static class Return extends Stmt {
+        final Token keyword;
         final Expr value;
         
-        public Return(Expr value) {
+        public Return(Token keyword, Expr value) {
+            this.keyword = keyword;
             this.value = value;
         }
 

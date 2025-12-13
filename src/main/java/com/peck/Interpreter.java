@@ -1,7 +1,9 @@
 package com.peck;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.peck.Expr.Call;
 import com.peck.Stmt.While;
@@ -10,6 +12,8 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
 
     public Environment globalEnv = new Environment();
     private Environment env =  globalEnv;
+
+    private Map<Expr, Integer> locals = new HashMap<>();
 
     public void interpret(List<Stmt> stmts) {
 
@@ -89,6 +93,27 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
         return a.equals(b);
     }
 
+    protected void resolve(Expr expr, int span) {
+        locals.put(expr, span);
+    }
+
+    private Object lookUpVariable(Expr expr, Token name) {
+        Integer distance = locals.get(expr);
+        if(distance != null) {
+            return env.getAt(distance, name);
+        } else {
+            return globalEnv.get(name);
+        }
+    }
+
+    private void assignVariable(Expr expr, Token name, Object value) {
+        Integer distance = locals.get(expr);
+        if(distance != null) {
+            env.assignAt(distance, name, value);
+        } else {
+            globalEnv.assign(name, value);
+        }
+    }
 
     @Override
     public Object visitBinaryExpr(Expr.Binary expr) {
@@ -172,13 +197,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
 
     @Override
     public Object visitVariableExpr(Expr.Variable expr) {
-        return env.get(expr.name);
+        return lookUpVariable(expr, expr.name);
     }
 
     @Override
     public Object visitAssignExpr(Expr.Assign expr) {
         Object val = evaluate(expr.value);
-        env.assign(expr.name, val);
+        assignVariable(expr, expr.name, val);
         return val;
     }
 

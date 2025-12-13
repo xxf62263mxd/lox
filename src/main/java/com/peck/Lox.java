@@ -20,6 +20,7 @@ public class Lox {
     private static boolean debug = false;
 
     public static void main(String[] args) throws IOException {
+        args = new String[] {"/Users/peck/code/lox/src/main/resources/func-case.lox"};
         if(args.length > 1) {
             System.out.println("Usage: jox [script]");
             System.exit(64);
@@ -69,7 +70,10 @@ public class Lox {
         List<Stmt> root = parser.parse();
 
         if(hadError) return;
+        Resolver resolver = new Resolver(interpreter);
+        resolver.resolve(root);
 
+        if(hadError) return;
         interpreter.interpret(root);
 
     }

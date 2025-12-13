@@ -166,13 +166,14 @@ public class Parser {
      * return -> 'return' expression? ';'
      */
     private Stmt returnStatement() {
+        Token keyword = previous();
         Expr value = null;
         if(peek().getType() != SEMICOLON) {
             value = expression();
         }
 
         consume(SEMICOLON,"Expect ';' at end of statement");
-        return new Stmt.Return(value);
+        return new Stmt.Return(keyword, value);
     }
 
     /**
