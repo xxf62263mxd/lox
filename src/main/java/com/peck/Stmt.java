@@ -124,6 +124,21 @@ public abstract class Stmt {
         }
     }
 
+    public static class Class extends Stmt {
+        final Token name;
+        final List<Function> methods;
+
+        public Class(Token name, List<Function> methods) {
+            this.name = name;
+            this.methods = methods;
+        }
+
+        @Override
+        void accept(Visitor visitor) {
+            visitor.visitClassStmt(this);
+        }
+    }
+
 
     public interface Visitor {
         void visitExpressionStmt(Expression stmt);
@@ -134,5 +149,6 @@ public abstract class Stmt {
         void visitWhileStmt(While stmt);
         void visitFunctionStmt(Function stmt);
         void visitReturnStmt(Return stmt);
+        void visitClassStmt(Class stmt);
     }
 }

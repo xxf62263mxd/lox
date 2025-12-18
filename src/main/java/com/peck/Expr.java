@@ -127,6 +127,39 @@ public abstract class Expr {
         }
     }
 
+    public static class Get extends Expr {
+        final Expr obj;
+        final Token name;
+
+        public Get(Expr obj, Token name) {
+            this.obj = obj;
+            this.name = name;
+        }
+        
+        @Override
+        <R> R accept(Visitor<R> visitor) {
+            return visitor.visitGetExpr(this);
+        }
+    
+    }
+
+    public static class Set extends Expr {
+        final Expr obj;
+        final Token name;
+        final Expr value;
+
+        public Set(Expr obj, Token name, Expr value) {
+            this.obj = obj;
+            this.name = name;
+            this. value = value;
+        }
+
+        @Override
+        <R> R accept(Visitor<R> visitor) {
+            return visitor.visitSetExpr(this);
+        }
+    }
+
 
     // A Visitor can be regarded as an operator for each Expr
     // This is an appropriate pattern design when we have a pure data class
@@ -140,5 +173,7 @@ public abstract class Expr {
         R visitAssignExpr(Assign expr);
         R visitLogicalExpr(Logical expr);
         R visitCallExpr(Call expr);
+        R visitGetExpr(Get expr);
+        R visitSetExpr(Set expr);
     }
 }

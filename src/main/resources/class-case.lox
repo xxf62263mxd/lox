@@ -1,0 +1,21 @@
+class DevonshireCream {
+  serveOn() {
+    return "Scones";
+  }
+}
+
+print DevonshireCream;
+
+var ins = DevonshireCream();
+var ins2 = DevonshireCream();
+
+ins.a = ins2;
+print ins.a;
+
+class Bacon {
+  eat() {
+    print "Crunch crunch crunch!";
+  }
+}
+
+Bacon().eat();

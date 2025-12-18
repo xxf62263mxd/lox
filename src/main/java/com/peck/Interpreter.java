@@ -5,9 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.peck.Expr.Call;
-import com.peck.Stmt.While;
-
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
 
     public Environment globalEnv = new Environment();
@@ -221,6 +218,31 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
     }
 
     @Override
+    public Object visitGetExpr(Expr.Get expr) {
+        Object obj = evaluate(expr.obj);
+
+        if(obj instanceof Instance ins) {
+            return ins.get(expr.name);
+        }
+
+        throw new InterpretError(expr.name, "Only instances have properties.");
+    }
+
+    @Override
+    public Object visitSetExpr(Expr.Set expr) {
+        Object obj = evaluate(expr.obj);
+        
+
+        if(obj instanceof Instance ins) {
+            Object val = evaluate(expr.value);    
+            ins.set(expr.name, val);
+            return val;
+        }
+
+        throw new InterpretError(expr.name, "Only instances have fields.");
+    }
+
+    @Override
     public void visitExpressionStmt(Stmt.Expression stmt) {
         evaluate(stmt.expr);
     }
@@ -255,14 +277,14 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
     }
 
     @Override
-    public void visitWhileStmt(While stmt) {
+    public void visitWhileStmt(Stmt.While stmt) {
         while(isTruthy(evaluate(stmt.conditionExpr))) {
             execute(stmt.body);
         }
     }
 
     @Override
-    public Object visitCallExpr(Call expr) {
+    public Object visitCallExpr(Expr.Call expr) {
         Object callee = evaluate(expr.callee);
 
         List<Object> args = new ArrayList<>();
@@ -297,6 +319,18 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
             value = evaluate(stmt.value);
 
         throw new ReturnValue(value);
+    }
+
+    @Override
+    public void visitClassStmt(Stmt.Class stmt) {
+        env.define(stmt.name.getLexeme(), null);
+        Map<String, Function> methods = new HashMap<>();
+        for(Stmt.Function method : stmt.methods) {
+            methods.put(method.name.getLexeme(), new Function(method, env));
+        }
+
+        Class cls = new Class(stmt, methods);
+        env.assign(stmt.name, cls);
     }
 
     private void checkNumberOperand(Token operator, Object operand) {
@@ -370,6 +404,67 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
         public ReturnValue(Object value) {
             super(null, null, false, false);
             this.value = value;
+        }
+    }
+
+    private class Class implements Callable {
+
+        final Stmt.Class stmt;
+        final Map<String, Function> methods;
+
+        public Class(Stmt.Class stmt, Map<String, Function> methods) {
+            this.stmt = stmt;
+            this.methods = methods;
+        }
+
+        public Function findMethod(String name) {
+            return methods.get(name);
+        }
+
+        @Override
+        public int arity() {
+            return 0;
+        }
+
+        @Override
+        public Object call(List<Object> args) {
+            Instance instance = new Instance(this);
+            return instance;
+        }
+        
+        @Override
+        public String toString() {
+            return "<class " + stmt.name.getLexeme() + ">"; 
+        }
+        
+    }
+
+    private class Instance {
+        final Class cls;
+        private Map<String, Object> fields = new HashMap<>();
+
+        public Instance(Class cls) {
+            this.cls = cls;
+        }
+
+        public Object get(Token name) {
+            if(fields.containsKey(name.getLexeme())) {
+                return fields.get(name.getLexeme()); 
+            }
+
+            Function method = cls.findMethod(name.getLexeme());
+            if(method != null) return method; 
+
+            throw new InterpretError(name, "Undefined property '" + name.getLexeme() + "'.");
+        }
+
+        public void set(Token name, Object val) {
+            fields.put(name.getLexeme(), val);
+        }
+
+        @Override
+        public String toString() {
+            return "<instance " + cls.stmt.name.getLexeme() + ">";  
         }
     }
 }

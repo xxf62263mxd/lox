@@ -145,6 +145,20 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor {
         }
         return null;
     }
+    
+    @Override
+    public Void visitGetExpr(Expr.Get expr) {
+        resolve(expr.obj);
+        // we needn't resolve expr.name, because the fields in object only in object own scope.
+        return null;
+    }
+
+    @Override
+    public Void visitSetExpr(Expr.Set expr) {
+        resolve(expr.obj);
+        resolve(expr.value);
+        return null;
+    }
 
     @Override
     public void visitExpressionStmt(Stmt.Expression stmt) {
@@ -203,8 +217,28 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor {
             resolve(stmt.value);
     }
     
+    @Override
+    public void visitClassStmt(Stmt.Class stmt) {
+        declare(stmt.name);
+
+        List<Stmt.Function> methods = stmt.methods;
+        for(Stmt.Function method : methods) {
+            resolveFunction(method, FunctionType.METHOD);
+        }
+
+
+        define(stmt.name);
+    }
+    
+
+
+
     private enum FunctionType {
         NONE,
-        FUNCTION
+        FUNCTION,
+        METHOD,
     }
+
+
+    
 }

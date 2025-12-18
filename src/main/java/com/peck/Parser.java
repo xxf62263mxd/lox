@@ -25,10 +25,11 @@ public class Parser {
     }
 
     /**
-     * declaration ->   varDeclaration | funDeclaration | statement
+     * declaration ->   classDeclaration | varDeclaration | funDeclaration | statement
      */
     private Stmt declaration() {
         try {
+            if(consumeIfMatchAny(CLASS)) return classDeclaration();
             if(consumeIfMatchAny(FUN)) return funDeclaration();
             if(consumeIfMatchAny(VAR)) return varDeclaration();
             return statement();
@@ -71,6 +72,21 @@ public class Parser {
         Stmt.Block body = (Stmt.Block) blockStatement();
 
         return new Stmt.Function(name, params, body); 
+    }
+    
+    private Stmt classDeclaration() {
+        consume(IDENTIFIER, "Expect class name.");
+        Token name = previous();
+
+        consume(LEFT_BRACE, "Expect '{' before class body.");
+        List<Stmt.Function> methods = new ArrayList<>();
+        while(peek().getType() != RIGHT_BRACE && !isAtEnd()) {
+            methods.add((Stmt.Function)funDeclaration());
+
+        }
+        consume(RIGHT_BRACE, "Expect '}' after class body.");
+
+        return new Stmt.Class(name, methods);
     }
 
     /**
@@ -216,7 +232,7 @@ public class Parser {
     }
 
     /**
-     *  assignment -> IDENTIFIER "=" assignment
+     *  assignment -> (call ".")? IDENTIFIER "=" assignment
      *                | logic_or
      */
     private Expr assignment() {
@@ -230,8 +246,9 @@ public class Parser {
             Expr val = assignment();
 
             if(left instanceof Expr.Variable var) {
-                Token name = var.name;
-                return new Expr.Assign(name, val);
+                return new Expr.Assign(var.name, val);
+            } else if (left instanceof Expr.Get getter) {
+                return new Expr.Set(getter.obj, getter.name, val);
             }
 
             throw error(operator, "Invalid assignment target.");
@@ -343,20 +360,28 @@ public class Parser {
     }
 
     /**
-     * call -> primary ( '(' arguments? ')' )*
+     * call -> primary ( '(' arguments? ')' | '.' IDENTIFER)*
      */
     private Expr call() {
         Expr expr = primary();
         
-        if(consumeIfMatchAny(LEFT_PAREN)) {
-            List<Expr> args = Collections.emptyList();
-            if(peek().getType() != RIGHT_PAREN) {
-                args = arguments();
+        while(true) {
+            if(consumeIfMatchAny(LEFT_PAREN)) {
+                List<Expr> args = Collections.emptyList();
+                if(peek().getType() != RIGHT_PAREN) {
+                    args = arguments();
+                }
+                consume(RIGHT_PAREN,"Expect ')' at the end of function.");
+                expr = new Expr.Call(expr, previous(), args);
+            } else if (consumeIfMatchAny(DOT)) {
+                consume(IDENTIFIER, "Expect property name after '.'.");
+                Token name = previous();
+                expr = new Expr.Get(expr, name);
+            } else {
+                break;
             }
-            consume(RIGHT_PAREN,"Expect ')' at the end of function.");
-            return new Expr.Call(expr, previous(), args);
         }
-
+       
         return expr;
     }
 
