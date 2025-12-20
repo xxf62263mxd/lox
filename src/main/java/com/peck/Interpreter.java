@@ -243,6 +243,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
     }
 
     @Override
+    public Object visitThisExpr(Expr.This expr) {
+        return lookUpVariable(expr, expr.token);
+    }
+
+    @Override
     public void visitExpressionStmt(Stmt.Expression stmt) {
         evaluate(stmt.expr);
     }
@@ -390,6 +395,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
             return null;
         }
 
+        public Function bind(Instance ins) {
+            Environment bound = new Environment(closure);
+            bound.define("this", ins);
+            return new Function(func, bound);
+        } 
+
         @Override
         public String toString() {
             return "<fn " + func.name + ">";
@@ -453,7 +464,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
             }
 
             Function method = cls.findMethod(name.getLexeme());
-            if(method != null) return method; 
+            if(method != null) return method.bind(this); 
 
             throw new InterpretError(name, "Undefined property '" + name.getLexeme() + "'.");
         }
@@ -461,6 +472,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
         public void set(Token name, Object val) {
             fields.put(name.getLexeme(), val);
         }
+
 
         @Override
         public String toString() {

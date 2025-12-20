@@ -160,6 +160,18 @@ public abstract class Expr {
         }
     }
 
+    public static class This extends Expr {
+        final Token token;
+        public This(Token token) {
+            this.token = token;
+        }
+
+        @Override
+        <R> R accept(Visitor<R> visitor) {
+            return visitor.visitThisExpr(this);
+        }
+    }
+
 
     // A Visitor can be regarded as an operator for each Expr
     // This is an appropriate pattern design when we have a pure data class
@@ -175,5 +187,6 @@ public abstract class Expr {
         R visitCallExpr(Call expr);
         R visitGetExpr(Get expr);
         R visitSetExpr(Set expr);
+        R visitThisExpr(This expr);
     }
 }

@@ -12,6 +12,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor {
     // 'true' represent this variable is be defined, it is available.
     private final Stack<Map<String, Boolean>> scopes = new Stack<>();
     private FunctionType currentFunction = FunctionType.NONE;
+    private ClassType currentClass = ClassType.NONE;
 
     public Resolver(Interpreter interpreter) {
         this.interpreter = interpreter;
@@ -161,6 +162,17 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor {
     }
 
     @Override
+    public Void visitThisExpr(Expr.This expr) {
+        if (currentClass != ClassType.CLASS) {
+            Lox.error(expr.token, "Can't use 'this' outside of a class.");
+            return null;
+        }
+        doResolve(expr, expr.token);
+        return null;
+    }
+    
+
+    @Override
     public void visitExpressionStmt(Stmt.Expression stmt) {
         resolve(stmt.expr);
     }
@@ -219,19 +231,24 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor {
     
     @Override
     public void visitClassStmt(Stmt.Class stmt) {
+        ClassType enclosingClass = currentClass;
+        currentClass = ClassType.CLASS;
+
         declare(stmt.name);
+        define(stmt.name);
+
+        beginScope();
+        scopes.peek().put("this", true);
+
 
         List<Stmt.Function> methods = stmt.methods;
         for(Stmt.Function method : methods) {
             resolveFunction(method, FunctionType.METHOD);
         }
+        endScope();
 
-
-        define(stmt.name);
+        currentClass = enclosingClass;
     }
-    
-
-
 
     private enum FunctionType {
         NONE,
@@ -239,6 +256,9 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor {
         METHOD,
     }
 
-
+    private enum ClassType {
+        NONE,
+        CLASS,
+    }
     
 }

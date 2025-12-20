@@ -422,6 +422,10 @@ public class Parser {
             return expr;
         }
 
+        if(consumeIfMatchAny(THIS)) {
+            return new Expr.This(previous());
+        }
+
         // A function also is stored in env as a variable
         if(consumeIfMatchAny(IDENTIFIER))
             return new Expr.Variable(previous()); 
