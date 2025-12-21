@@ -32,3 +32,16 @@ class Thing {
 
 var callback = Thing().getCallback();
 callback();
+
+
+class Cons {
+  init(a,b) {
+    this.a = b;
+    this.b = b;
+    return;
+  }
+}
+
+var c = Cons(1,2);
+print c.a + c.b;
+print c.init(2,2);

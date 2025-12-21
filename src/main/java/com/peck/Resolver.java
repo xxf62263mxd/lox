@@ -225,8 +225,13 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor {
         if(currentFunction == FunctionType.NONE) {
             Lox.error(stmt.keyword, "Can't return from top-level code.");
         }
-        if(stmt.value != null)
-            resolve(stmt.value);
+        if(stmt.value != null) {
+            if(currentFunction == FunctionType.INITIALLIZER) {
+                Lox.error(stmt.keyword, "Can't return a value from an initializer.");
+            }
+            resolve(stmt.value); 
+        }
+           
     }
     
     @Override
@@ -243,7 +248,11 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor {
 
         List<Stmt.Function> methods = stmt.methods;
         for(Stmt.Function method : methods) {
-            resolveFunction(method, FunctionType.METHOD);
+            FunctionType type = FunctionType.METHOD;
+            if(method.name.getLexeme().equals("init")) {
+                type = FunctionType.INITIALLIZER;
+            }
+            resolveFunction(method, type);
         }
         endScope();
 
@@ -253,6 +262,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor {
     private enum FunctionType {
         NONE,
         FUNCTION,
+        INITIALLIZER,
         METHOD,
     }
 

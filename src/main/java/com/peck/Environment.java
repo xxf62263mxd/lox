@@ -32,6 +32,19 @@ public class Environment {
                 ,"Undefined variable '" + token.getLexeme() + "'.");
     }
 
+    public Object get(Token token, String name) {
+        if(values.containsKey(name)) {
+            return values.get(name);
+        }
+
+        if(parent != null) {
+            return parent.get(token, name);
+        }
+
+        throw new InterpretError(token
+                ,"Undefined variable '" + name + "'.");
+    }
+
     public void assign(Token token, Object value) {
         if(values.containsKey(token.getLexeme())) {
             values.put(token.getLexeme(), value);
@@ -57,6 +70,10 @@ public class Environment {
 
     public Object getAt(int distance, Token token) {
         return ancestor(distance).get(token);
+    }
+
+    public Object getAt(int distance, Token token, String name) {
+        return ancestor(distance).get(token, name);
     }
 
     public void assignAt(int distance, Token token, Object value) {

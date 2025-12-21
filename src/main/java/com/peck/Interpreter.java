@@ -313,7 +313,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
 
     @Override
     public void visitFunctionStmt(Stmt.Function stmt) {
-        Function func = new Function(stmt, env);
+        Function func = new Function(stmt, env, false);
         env.define(stmt.name.getLexeme(), func);
     }
 
@@ -323,7 +323,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
         if(stmt.value != null)
             value = evaluate(stmt.value);
 
-        throw new ReturnValue(value);
+        throw new ReturnValue(stmt.keyword, value);
     }
 
     @Override
@@ -331,7 +331,9 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
         env.define(stmt.name.getLexeme(), null);
         Map<String, Function> methods = new HashMap<>();
         for(Stmt.Function method : stmt.methods) {
-            methods.put(method.name.getLexeme(), new Function(method, env));
+            methods.put(method.name.getLexeme()
+                , new Function(method, env
+                    , method.name.getLexeme().equals("init")));
         }
 
         Class cls = new Class(stmt, methods);
@@ -365,9 +367,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
         final Stmt.Function func;
         final Environment closure;
 
-        public Function(Stmt.Function code, Environment closure) {
+        final boolean isInitiallizer;
+
+        public Function(Stmt.Function code, Environment closure, boolean isInitiallizer) {
             this.func = code;
             this.closure = closure;
+            this.isInitiallizer = isInitiallizer;
         }
 
         @Override
@@ -389,6 +394,9 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
             try {
                 executeBlock(func.body, env);
             } catch(ReturnValue r) {
+                if(isInitiallizer) {
+                    return closure.getAt(0, r.token, "this");
+                }
                 return r.value;
             }
             
@@ -398,7 +406,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
         public Function bind(Instance ins) {
             Environment bound = new Environment(closure);
             bound.define("this", ins);
-            return new Function(func, bound);
+            return new Function(func, bound, isInitiallizer);
         } 
 
         @Override
@@ -410,10 +418,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
 
     //we disguise an RuntimeException as ReturnValue to interrupt java stack
     private class ReturnValue extends RuntimeException{
+        final Token token;
         final Object value;
 
-        public ReturnValue(Object value) {
+        public ReturnValue(Token token, Object value) {
             super(null, null, false, false);
+            this.token = token;
             this.value = value;
         }
     }
@@ -434,13 +444,22 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor{
 
         @Override
         public int arity() {
+            Function init = findMethod("init");
+            if(init != null) {
+                return init.arity();
+            }
             return 0;
         }
 
         @Override
         public Object call(List<Object> args) {
-            Instance instance = new Instance(this);
-            return instance;
+            Instance ins = new Instance(this);
+            Function init = findMethod("init");
+            if(init != null) {
+                init.bind(ins).call(args);
+            }
+
+            return ins;
         }
         
         @Override
